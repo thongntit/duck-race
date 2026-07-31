@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#063b42" />
+    <meta name="description" content="QuackTrack: a fair, auditable, unpredictable duck race." />
+    <title>QuackTrack — fair duck races</title>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="site-header">
+        <a class="brand" href="#race-desk" aria-label="QuackTrack home">
+          <span class="brand-mark" aria-hidden="true">Q</span>
+          <span>QUACK<span>TRACK</span></span>
+        </a>
+        <p class="header-note">A better way to pick a winner.</p>
+        <div class="fairness-chip"><span aria-hidden="true">●</span> Locked before the whistle</div>
+      </header>
+
+      <section class="race-desk" id="race-desk" aria-labelledby="race-title">
+        <aside class="setup-panel">
+          <div class="eyebrow">RACE DESK / 01</div>
+          <h1 id="race-title">A race should be exciting,<br /><em>not readable.</em></h1>
+          <p class="lede">Every duck has the same chance. We lock the result first, then make the river earn the reveal.</p>
+
+          <form id="race-form" novalidate>
+            <label for="entrants">Entrants <span id="entrant-count">4 ducks</span></label>
+            <textarea id="entrants" rows="8" maxlength="360" spellcheck="false" aria-describedby="entrant-help">Ada
+Bảo
+Chi
+Duy</textarea>
+            <p class="field-help" id="entrant-help">One name per line · 2–12 ducks · duplicates are welcome</p>
+            <div class="course-control">
+              <label for="course">Course <span>Visual route only</span></label>
+              <select id="course" aria-describedby="course-help">
+                <option value="tanglewater">Tanglewater — bright marsh</option>
+                <option value="random">Random — Tanglewater for V1</option>
+              </select>
+              <p class="field-help" id="course-help">Course treatment never changes the locked result or anyone’s odds.</p>
+            </div>
+            <p class="form-message" id="form-message" role="alert"></p>
+            <button class="primary-action" id="start-race" type="submit">
+              <span>Launch fair race</span><b aria-hidden="true">↗</b>
+            </button>
+          </form>
+
+          <details class="fairness-note">
+            <summary>How the fairness check works</summary>
+            <p>At launch, a cryptographically random winner is chosen and committed with a SHA‑256 proof. The animated river can never change it. When the race ends, you can verify the proof with the revealed seed.</p>
+          </details>
+        </aside>
+
+        <section class="race-monitor" aria-labelledby="monitor-title">
+          <div class="monitor-topline">
+            <div>
+              <div class="eyebrow">LIVE RIVER FEED / 02</div>
+              <h2 id="monitor-title">Waiting at the starting reeds</h2>
+            </div>
+            <button class="text-action hidden" id="reset-race" type="button">New race</button>
+          </div>
+
+          <div class="proof-strip" id="proof-strip" aria-live="polite">
+            <span class="proof-dot" aria-hidden="true"></span>
+            <span id="proof-text">The commitment appears the moment you launch.</span>
+          </div>
+
+          <div class="event-card" id="event-card" aria-live="polite">
+            <span class="event-index">UP NEXT</span>
+            <div><strong>Set your lineup</strong><p>The river needs at least two ducks.</p></div>
+          </div>
+
+          <div class="river-stage" aria-label="Duck race course">
+            <div class="river-sky" aria-hidden="true"><span class="sun"></span><span class="cloud cloud-one"></span><span class="cloud cloud-two"></span></div>
+            <div class="event-scenery" aria-hidden="true">
+              <div class="scene-current"><span></span><span></span><span></span></div>
+              <div class="scene-reeds"><span></span><span></span><span></span><span></span></div>
+              <div class="scene-splash"><span></span><span></span><span></span></div>
+              <div class="scene-ripple"><span></span><span></span><span></span></div>
+              <div class="scene-cheering"><span>GO!</span><span>QUACK</span><span>HEY!</span></div>
+              <div class="scene-driftwood"><span></span><span></span><span></span></div>
+              <div class="scene-final-bend"><span></span><span></span></div>
+            </div>
+            <div class="finish-line" aria-hidden="true"><span>FINISH</span></div>
+            <div class="lanes" id="lanes"></div>
+            <div class="start-line" aria-hidden="true"><span>START</span></div>
+            <div class="river-footer" aria-hidden="true"><span id="course-state">TANGLEWATER · MARSH COURSE</span><span id="race-clock">00:00</span></div>
+          </div>
+
+          <div class="monitor-footer">
+            <div class="pack-status"><span class="pulse" aria-hidden="true"></span><span id="pack-status">The pack is waiting.</span></div>
+          </div>
+
+          <section class="result-card hidden" id="result-card" aria-live="assertive" aria-labelledby="result-title">
+            <div class="result-label">RACE COMPLETE / PROOF REVEALED</div>
+            <h2 id="result-title">—</h2>
+            <p id="result-text"></p>
+            <div class="proof-reveal"><code id="proof-reveal"></code><button class="verify-button" id="verify-proof" type="button">Verify proof</button></div>
+            <p class="verification-status" id="verification-status" role="status"></p>
+          </section>
+        </section>
+      </section>
+
+      <p class="screen-reader-only" id="live-region" aria-live="polite"></p>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
