@@ -3,102 +3,121 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#063b42" />
-    <meta name="description" content="QuackTrack: a fair, auditable, unpredictable duck race." />
-    <title>QuackTrack — fair duck races</title>
+    <meta name="theme-color" content="#176f9c" />
+    <meta name="description" content="QuackTrack: a fair, auditable toy duck race." />
+    <title>QuackTrack — Toybox Mayhem</title>
   </head>
   <body>
-    <main class="app-shell">
-      <header class="site-header">
-        <a class="brand" href="#race-desk" aria-label="QuackTrack home">
-          <span class="brand-mark" aria-hidden="true">Q</span>
+    <main class="toybox-app" id="top">
+      <header class="toybox-header">
+        <a class="wordmark" href="#toy-stage" aria-label="QuackTrack toy race stage">
+          <span class="wordmark-badge" aria-hidden="true"><i></i><i></i><i></i></span>
           <span>QUACK<span>TRACK</span></span>
         </a>
-        <p class="header-note">A better way to pick a winner.</p>
-        <div class="fairness-chip"><span aria-hidden="true">●</span> Locked before the whistle</div>
+        <div class="fair-seal" aria-label="Fair result is locked before the race starts"><span aria-hidden="true">✓</span> FAIR PLAYSET</div>
+        <details class="fair-guide">
+          <summary>HOW IT'S FAIR</summary>
+          <p>A cryptographically random winner is locked with a SHA-256 commitment before the gate lifts. The toy river only tells the already-locked story.</p>
+        </details>
       </header>
 
-      <section class="race-desk" id="race-desk" aria-labelledby="race-title">
-        <aside class="setup-panel">
-          <div class="eyebrow">RACE DESK / 01</div>
-          <h1 id="race-title">A race should be exciting,<br /><em>not readable.</em></h1>
-          <p class="lede">Every duck has the same chance. We lock the result first, then make the river earn the reveal.</p>
+      <section class="stage-frame" aria-labelledby="stage-title">
+        <div class="stage-shadow" aria-hidden="true"></div>
+        <section class="toy-stage" id="toy-stage" aria-label="Toy duck race stage" data-stage-event="setup" data-launch-state="resting">
+          <div class="stage-sky" aria-hidden="true">
+            <span class="sun-disc"></span><span class="cloud cloud-a"></span><span class="cloud cloud-b"></span>
+            <span class="shelf-stripe"></span>
+          </div>
 
-          <form id="race-form" novalidate>
-            <label for="entrants">Entrants <span id="entrant-count">4 ducks</span></label>
-            <textarea id="entrants" rows="8" maxlength="360" spellcheck="false" aria-describedby="entrant-help">Ada
+          <div class="back-bank" aria-hidden="true">
+            <span class="bank-hill hill-one"></span><span class="bank-hill hill-two"></span>
+            <span class="tree-lollipop tree-one"></span><span class="tree-lollipop tree-two"></span>
+          </div>
+
+          <div class="toy-props" aria-hidden="true">
+            <div class="toy-prop prop-fan">
+              <span class="fan-cage"><i class="fan-blades"></i></span><span class="fan-stand"></span><span class="fan-base"></span>
+              <span class="paper-stream paper-one"></span><span class="paper-stream paper-two"></span><span class="paper-stream paper-three"></span>
+            </div>
+            <div class="toy-prop prop-reeds">
+              <span class="foam-reed reed-one"></span><span class="foam-reed reed-two"></span><span class="foam-reed reed-three"></span><span class="foam-reed reed-four"></span>
+            </div>
+            <div class="toy-prop prop-splash">
+              <span class="squeeze-bulb"><i></i></span><span class="spray-nozzle"></span>
+              <span class="cardboard-drop drop-one"></span><span class="cardboard-drop drop-two"></span><span class="cardboard-drop drop-three"></span>
+            </div>
+            <div class="toy-prop prop-ripple">
+              <span class="crank-wheel"><i></i></span><span class="crank-handle"></span>
+              <span class="molded-ripple ripple-one"></span><span class="molded-ripple ripple-two"></span><span class="molded-ripple ripple-three"></span>
+            </div>
+            <div class="toy-prop prop-cheer">
+              <span class="pegboard"></span><span class="cheer-sign sign-one">SPLASH!</span><span class="cheer-sign sign-two">GO!</span><span class="cheer-sign sign-three">QUACK!</span>
+            </div>
+            <div class="toy-prop prop-log-gate"><span class="log log-one"></span><span class="log log-two"></span><span class="log-hinge"></span></div>
+          </div>
+
+          <div class="stage-topline">
+            <div class="stage-title-wrap"><span class="mini-label">TOY RIVER / 01</span><h1 id="stage-title">Toybox Mayhem</h1></div>
+            <div class="sealed-ticket" id="proof-ticket"><span class="seal-wax" aria-hidden="true">✓</span><span id="proof-text">SEALED TICKET · waiting to wind</span></div>
+          </div>
+
+          <div class="stage-placard" id="stage-placard" aria-live="polite">
+            <span class="placard-pin" aria-hidden="true"></span><span class="placard-kicker" id="placard-kicker">READY</span><strong id="placard-title">Open the race crate</strong><span id="placard-copy">Set the ducks loose on the river mat.</span>
+          </div>
+
+          <div class="starting-gate" aria-hidden="true"><span class="gate-post post-left"></span><span class="gate-post post-right"></span><span class="gate-bar"><i>READY</i></span><span class="wind-key"><i></i></span><span class="spring-coil"></span></div>
+          <div class="finish-ramp" aria-hidden="true"><span class="finish-flag flag-one"></span><span class="finish-flag flag-two"></span><span class="ribbon-left"></span><span class="ribbon-right"></span><span class="finish-ribbon">FINISH!</span><span class="podium-step"></span></div>
+
+          <div class="lanes" id="lanes"></div>
+
+          <div class="ribbon-burst" id="ribbon-burst" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+
+          <footer class="stage-footer" aria-live="polite">
+            <span class="course-sticker" id="course-state">TANGLEWATER · VISUAL ROUTE</span>
+            <span class="pack-status"><i aria-hidden="true"></i><span id="pack-status">The playset is ready.</span></span>
+            <span class="race-clock" id="race-clock">00:00</span>
+          </footer>
+        </section>
+      </section>
+
+      <aside class="race-crate" id="race-crate" aria-labelledby="crate-title">
+        <div class="crate-tab" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="crate-heading"><div><span class="mini-label">RACE CRATE</span><h2 id="crate-title">Wind up the ducks</h2></div><span class="crate-sticker" id="entrant-count">4 DUCKS</span></div>
+        <form id="race-form" novalidate>
+          <div class="crate-field">
+            <label for="entrants">Roster <span>one name per line</span></label>
+            <textarea id="entrants" rows="4" maxlength="360" spellcheck="false" aria-describedby="entrant-help">Ada
 Bảo
 Chi
 Duy</textarea>
-            <p class="field-help" id="entrant-help">One name per line · 2–12 ducks · duplicates are welcome</p>
-            <div class="course-control">
-              <label for="course">Course <span>Visual route only</span></label>
-              <select id="course" aria-describedby="course-help">
-                <option value="tanglewater">Tanglewater — bright marsh</option>
-                <option value="random">Random — Tanglewater for V1</option>
-              </select>
-              <p class="field-help" id="course-help">Course treatment never changes the locked result or anyone’s odds.</p>
-            </div>
-            <p class="form-message" id="form-message" role="alert"></p>
-            <button class="primary-action" id="start-race" type="submit">
-              <span>Launch fair race</span><b aria-hidden="true">↗</b>
-            </button>
-          </form>
-
-          <details class="fairness-note">
-            <summary>How the fairness check works</summary>
-            <p>At launch, a cryptographically random winner is chosen and committed with a SHA‑256 proof. The animated river can never change it. When the race ends, you can verify the proof with the revealed seed.</p>
-          </details>
-        </aside>
-
-        <section class="race-monitor" aria-labelledby="monitor-title">
-          <div class="monitor-topline">
-            <div>
-              <div class="eyebrow">LIVE RIVER FEED / 02</div>
-              <h2 id="monitor-title">Waiting at the starting reeds</h2>
-            </div>
-            <button class="text-action hidden" id="reset-race" type="button">New race</button>
+            <p class="field-help" id="entrant-help">2–12 ducks · duplicate names are welcome</p>
+            <div class="roster-chips" id="roster-chips" aria-label="Duck roster preview"></div>
           </div>
-
-          <div class="proof-strip" id="proof-strip" aria-live="polite">
-            <span class="proof-dot" aria-hidden="true"></span>
-            <span id="proof-text">The commitment appears the moment you launch.</span>
+          <div class="crate-row">
+            <label for="course">Course <span>looks only</span></label>
+            <select id="course" aria-describedby="course-help">
+              <option value="tanglewater">Tanglewater river mat</option>
+              <option value="random">Random visual route</option>
+            </select>
           </div>
+          <p class="field-help course-help" id="course-help">The course only changes the toy-set treatment.</p>
+          <p class="form-message" id="form-message" role="alert"></p>
+          <button class="wind-button" id="start-race" type="submit"><span class="wind-key-icon" aria-hidden="true"><i></i></span><span>WIND UP &amp; RACE</span><b aria-hidden="true">↻</b></button>
+        </form>
+      </aside>
 
-          <div class="event-card" id="event-card" aria-live="polite">
-            <span class="event-index">UP NEXT</span>
-            <div><strong>Set your lineup</strong><p>The river needs at least two ducks.</p></div>
-          </div>
-
-          <div class="river-stage" aria-label="Duck race course">
-            <div class="river-sky" aria-hidden="true"><span class="sun"></span><span class="cloud cloud-one"></span><span class="cloud cloud-two"></span></div>
-            <div class="event-scenery" aria-hidden="true">
-              <div class="scene-current"><span></span><span></span><span></span></div>
-              <div class="scene-reeds"><span></span><span></span><span></span><span></span></div>
-              <div class="scene-splash"><span></span><span></span><span></span></div>
-              <div class="scene-ripple"><span></span><span></span><span></span></div>
-              <div class="scene-cheering"><span>GO!</span><span>QUACK</span><span>HEY!</span></div>
-              <div class="scene-driftwood"><span></span><span></span><span></span></div>
-              <div class="scene-final-bend"><span></span><span></span></div>
-            </div>
-            <div class="finish-line" aria-hidden="true"><span>FINISH</span></div>
-            <div class="lanes" id="lanes"></div>
-            <div class="start-line" aria-hidden="true"><span>START</span></div>
-            <div class="river-footer" aria-hidden="true"><span id="course-state">TANGLEWATER · MARSH COURSE</span><span id="race-clock">00:00</span></div>
-          </div>
-
-          <div class="monitor-footer">
-            <div class="pack-status"><span class="pulse" aria-hidden="true"></span><span id="pack-status">The pack is waiting.</span></div>
-          </div>
-
-          <section class="result-card hidden" id="result-card" aria-live="assertive" aria-labelledby="result-title">
-            <div class="result-label">RACE COMPLETE / PROOF REVEALED</div>
-            <h2 id="result-title">—</h2>
-            <p id="result-text"></p>
-            <div class="proof-reveal"><code id="proof-reveal"></code><button class="verify-button" id="verify-proof" type="button">Verify proof</button></div>
-            <p class="verification-status" id="verification-status" role="status"></p>
-          </section>
-        </section>
+      <section class="achievement-plaque hidden" id="result-card" aria-live="assertive" aria-labelledby="result-title">
+        <div class="plaque-rivet rivet-a" aria-hidden="true"></div><div class="plaque-rivet rivet-b" aria-hidden="true"></div>
+        <div class="winner-rosette" aria-hidden="true"><span>★</span></div>
+        <div class="result-copy"><span class="mini-label">RIBBON BURST / RESULT LOCKED</span><h2 id="result-title">—</h2><p id="result-text"></p></div>
+        <div class="proof-unfold">
+          <code id="proof-reveal"></code>
+          <button class="verify-button" id="verify-proof" type="button">VERIFY TICKET</button>
+        </div>
+        <p class="verification-status" id="verification-status" role="status"></p>
+        <button class="rerun-button" id="reset-race" type="button">RUN IT AGAIN <span aria-hidden="true">↻</span></button>
       </section>
 
       <p class="screen-reader-only" id="live-region" aria-live="polite"></p>

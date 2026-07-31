@@ -6,26 +6,40 @@ import {
   verifyRaceProof,
 } from './race-engine.js';
 
-const RACE_DURATION_MS = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 1500 : 13_500;
-const DUCK_COLORS = ['#ffce47', '#ec7a48', '#9dd6d0', '#e7a9b6', '#a8d17c', '#b8a4d9', '#f0a965', '#8ac2e2', '#e99b75', '#b0c9a0', '#e8ba59', '#a6b7df'];
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const RACE_DURATION_MS = REDUCED_MOTION ? 1500 : 13_500;
+const COUNTDOWN_STEP_MS = REDUCED_MOTION ? 210 : 650;
+const DUCK_COLORS = ['#ffcc35', '#ff7961', '#70c5dd', '#f3a3bf', '#9acc71', '#bca6e3', '#f3a45e', '#8fd1b5', '#ec8e76', '#bdcf81', '#f1bd5b', '#9fbae4'];
+const IDLE_DUCKS = [
+  { id: 'idle-1', name: 'Ready' },
+  { id: 'idle-2', name: 'Set' },
+  { id: 'idle-3', name: 'Wind' },
+  { id: 'idle-4', name: 'Go' },
+];
 
 const elements = {
+  app: document.querySelector('.toybox-app'),
   form: document.querySelector('#race-form'),
+  drawer: document.querySelector('#race-crate'),
   entrants: document.querySelector('#entrants'),
   entrantCount: document.querySelector('#entrant-count'),
+  rosterChips: document.querySelector('#roster-chips'),
   course: document.querySelector('#course'),
   formMessage: document.querySelector('#form-message'),
   start: document.querySelector('#start-race'),
   reset: document.querySelector('#reset-race'),
-  title: document.querySelector('#monitor-title'),
   proofText: document.querySelector('#proof-text'),
-  proofStrip: document.querySelector('#proof-strip'),
-  eventCard: document.querySelector('#event-card'),
-  stage: document.querySelector('.river-stage'),
+  proofTicket: document.querySelector('#proof-ticket'),
+  stage: document.querySelector('#toy-stage'),
+  placard: document.querySelector('#stage-placard'),
+  placardKicker: document.querySelector('#placard-kicker'),
+  placardTitle: document.querySelector('#placard-title'),
+  placardCopy: document.querySelector('#placard-copy'),
   lanes: document.querySelector('#lanes'),
   clock: document.querySelector('#race-clock'),
   courseState: document.querySelector('#course-state'),
   packStatus: document.querySelector('#pack-status'),
+  burst: document.querySelector('#ribbon-burst'),
   resultCard: document.querySelector('#result-card'),
   resultTitle: document.querySelector('#result-title'),
   resultText: document.querySelector('#result-text'),
@@ -40,9 +54,10 @@ let state = {
   race: null,
   story: null,
   frame: 0,
+  countdownTimer: 0,
+  placardTimer: 0,
   startedAt: 0,
   activeBeat: 'setup',
-  course: 'tanglewater',
 };
 
 function escapeHtml(value) {
@@ -59,9 +74,13 @@ function parseEntrants(value) {
   return names.map((name, index) => ({ id: `duck-${index + 1}`, name }));
 }
 
-function updateEntrantCount() {
-  const count = parseEntrants(elements.entrants.value).length;
-  elements.entrantCount.textContent = `${count} duck${count === 1 ? '' : 's'}`;
+function updateRosterPreview() {
+  const entrants = parseEntrants(elements.entrants.value);
+  elements.entrantCount.textContent = `${entrants.length} DUCK${entrants.length === 1 ? '' : 'S'}`;
+  elements.rosterChips.innerHTML = entrants.length
+    ? entrants.map((entrant, index) => `<span class="roster-chip" style="--chip-color:${DUCK_COLORS[index % DUCK_COLORS.length]}"><b>${escapeHtml(entrant.name.slice(0, 1).toUpperCase())}</b>${escapeHtml(entrant.name)}</span>`).join('')
+    : '<span class="roster-empty">Your duck tags appear here.</span>';
+  if (state.phase === 'setup') mountIdleDucks(entrants);
 }
 
 function showFormMessage(message = '') {
@@ -69,8 +88,8 @@ function showFormMessage(message = '') {
 }
 
 function validateEntrants(entrants) {
-  if (entrants.length === 0) return 'Add at least two named ducks before launching.';
-  if (entrants.length === 1) return 'Add one more named duck before launching.';
+  if (entrants.length === 0) return 'Add at least two named ducks before winding up.';
+  if (entrants.length === 1) return 'Add one more named duck before winding up.';
   if (entrants.length > 12) return 'Use no more than 12 named ducks in one race.';
   return '';
 }
@@ -80,18 +99,25 @@ function formatTime(fraction) {
   return `00:${String(seconds).padStart(2, '0')}`;
 }
 
-function duckMarkup(entrant, color) {
+function duckMarkup(entrant, index, scale) {
+  const color = DUCK_COLORS[index % DUCK_COLORS.length];
+  const initial = entrant.name.slice(0, 1).toUpperCase();
   return `<div class="lane" data-lane="${entrant.id}">
-    <span class="lane-name">${escapeHtml(entrant.name)}</span>
-    <div class="duck-runner" data-duck="${entrant.id}" style="--duck-color:${color}; left:15%" aria-label="${escapeHtml(entrant.name)}">
-      <span class="duck-head"><i class="duck-eye"></i></span><span class="duck-body"></span><span class="duck-bib">${String(entrant.name).slice(0, 1).toUpperCase()}</span>
+    <div class="duck-runner" data-duck="${entrant.id}" style="--duck-color:${color}; --duck-scale:${scale}; left:13%" aria-label="${escapeHtml(entrant.name)} duck">
+      <span class="duck-wake"></span><span class="duck-body"><i></i></span><span class="duck-head"><i class="duck-eye"></i><i class="duck-cheek"></i></span><span class="duck-bill"></span><span class="duck-bib">${escapeHtml(initial)}</span><span class="duck-tag">${escapeHtml(entrant.name)}</span>
     </div>
   </div>`;
 }
 
 function mountLanes(entrants) {
+  const scale = entrants.length > 8 ? 0.66 : entrants.length > 5 ? 0.78 : 1;
   elements.lanes.style.setProperty('--duck-count', entrants.length);
-  elements.lanes.innerHTML = entrants.map((entrant, index) => duckMarkup(entrant, DUCK_COLORS[index % DUCK_COLORS.length])).join('');
+  elements.lanes.innerHTML = entrants.map((entrant, index) => duckMarkup(entrant, index, scale)).join('');
+}
+
+function mountIdleDucks(entrants) {
+  const visibleDucks = entrants.length >= 2 ? entrants.slice(0, 4) : IDLE_DUCKS;
+  mountLanes(visibleDucks);
 }
 
 function eventKey(title) {
@@ -99,12 +125,12 @@ function eventKey(title) {
 }
 
 const EVENT_REPORTS = {
-  'Cross-current': 'A sideways current redraws the river.',
-  'Reed slalom': 'A reed wall narrows the channel.',
-  'Splash zone': 'A bright splash rolls across the lanes.',
-  'River ripple': 'Concentric wakes pull the picture tight.',
-  'Cheering bank': 'The riverbank erupts in paper signs.',
-  'Driftwood gate': 'Driftwood divides the water, then clears.',
+  'Cross-current': 'Desk fan whoosh! Paper-water ribbons sweep sideways.',
+  'Reed slalom': 'Foam reeds pop up on springs across the river mat.',
+  'Splash zone': 'The squeeze bulb sends cardboard droplets over a lane.',
+  'River ripple': 'The crank wheel presses ripples through the blue mat.',
+  'Cheering bank': 'Pegboard spectators raise their painted signs.',
+  'Driftwood gate': 'Chunky toy logs swing into a temporary gate.',
 };
 
 function setStageBeat(key, event = null) {
@@ -117,28 +143,37 @@ function setStageBeat(key, event = null) {
   }
 }
 
-function renderEventCard(label, title, message) {
-  elements.eventCard.innerHTML = `<span class="event-index">${label}</span><div><strong>${escapeHtml(title)}</strong><p>${escapeHtml(message)}</p></div>`;
+function showPlacard(kicker, title, copy, clearAfter = 0) {
+  window.clearTimeout(state.placardTimer);
+  elements.placardKicker.textContent = kicker;
+  elements.placardTitle.textContent = title;
+  elements.placardCopy.textContent = copy;
+  elements.placard.classList.remove('placard-cleared');
+  if (clearAfter) {
+    state.placardTimer = window.setTimeout(() => {
+      elements.placard.classList.add('placard-cleared');
+    }, clearAfter);
+  }
 }
 
 function updateRaceBeat(fraction) {
   const activeEvent = state.story.events.filter((event) => event.at <= fraction).at(-1);
   const beat = fraction >= 0.72
-    ? { key: 'final-bend', label: 'FINAL BEND', title: 'The finish narrows', message: 'The pack reaches the bend together.' }
+    ? { key: 'final-bend', kicker: 'FINAL BEND', title: 'The finish ramp rises!', message: 'Nobody is clear as the ribbon gets close.' }
     : activeEvent
       ? {
         key: eventKey(activeEvent.title),
-        label: 'RIVER REPORT',
+        kicker: 'TOYBOX BEAT',
         title: activeEvent.title,
-        message: EVENT_REPORTS[activeEvent.title] ?? 'The river changes shape around the pack.',
+        message: EVENT_REPORTS[activeEvent.title] ?? 'The toy river changes shape around the pack.',
         event: activeEvent,
       }
-      : { key: 'locked', label: 'LOCKED', title: 'Proof committed', message: 'The result is set. The river can only tell the story.' };
+      : { key: 'locked', kicker: 'TICKET SEALED', title: 'The river starts to wobble', message: 'The pack stays close at the starting reeds.' };
 
   if (state.activeBeat === beat.key) return;
   state.activeBeat = beat.key;
   setStageBeat(beat.key, beat.event);
-  renderEventCard(beat.label, beat.title, beat.message);
+  showPlacard(beat.kicker, beat.title, beat.message, beat.event ? 2200 : 0);
   if (beat.event) elements.live.textContent = `${beat.title}. ${beat.message}`;
 }
 
@@ -147,19 +182,18 @@ function renderPositions(fraction) {
   for (const duck of positions) {
     const node = elements.lanes.querySelector(`[data-duck="${duck.id}"]`);
     if (!node) continue;
-    node.style.left = `${15 + duck.progress * 78}%`;
-    node.setAttribute('aria-label', duck.name);
+    node.style.left = `${13 + duck.progress * 78}%`;
   }
 }
 
 function updatePackStatus(fraction) {
   const status = fraction < 0.3
-    ? 'The pack launches from the reeds.'
+    ? 'The pack bobs away from the reeds.'
     : fraction < 0.5
-      ? 'The pack is tight through the current.'
+      ? 'The spring current wobbles everyone.'
       : fraction < 0.72
-        ? 'Nobody has broken clear.'
-        : 'The field turns the final bend together.';
+        ? 'Nobody is clear.'
+        : 'The pack bunches at the ribbon.';
   elements.packStatus.textContent = status;
 }
 
@@ -177,6 +211,35 @@ function tick(timestamp) {
   }
 }
 
+function runCountdown(step = 0) {
+  const countdown = [
+    { state: 'winding', kicker: 'WIND', title: 'Key turns…', copy: 'The little spring winds tight.' },
+    { state: 'compressed', kicker: 'SNAP', title: 'Spring compresses…', copy: 'The starting gate is ready to pop.' },
+    { state: 'gate-open', kicker: 'GO', title: 'Gate lifts!', copy: 'The sealed toy story starts now.' },
+  ];
+  const current = countdown[step];
+  elements.stage.dataset.launchState = current.state;
+  showPlacard(current.kicker, current.title, current.copy);
+  elements.packStatus.textContent = current.copy;
+  elements.live.textContent = `${current.title} ${current.copy}`;
+
+  if (step < countdown.length - 1) {
+    state.countdownTimer = window.setTimeout(() => runCountdown(step + 1), COUNTDOWN_STEP_MS);
+  } else {
+    state.countdownTimer = window.setTimeout(beginRace, COUNTDOWN_STEP_MS);
+  }
+}
+
+function beginRace() {
+  state.phase = 'running';
+  state.startedAt = performance.now();
+  state.activeBeat = 'countdown';
+  elements.stage.dataset.launchState = 'racing';
+  elements.packStatus.textContent = 'The pack bobs away from the reeds.';
+  elements.live.textContent = 'The gate lifted. The fair race is underway.';
+  state.frame = window.requestAnimationFrame(tick);
+}
+
 async function startRace() {
   const entrants = parseEntrants(elements.entrants.value);
   const entrantError = validateEntrants(entrants);
@@ -189,85 +252,92 @@ async function startRace() {
   elements.start.disabled = true;
   state.race = await createRace(entrants);
   state.story = createRaceStory(state.race);
-  state.phase = 'running';
-  state.startedAt = performance.now();
-  state.activeBeat = 'locked';
-  state.course = elements.course.value === 'random' ? 'tanglewater' : elements.course.value;
+  state.phase = 'countdown';
+  state.activeBeat = 'countdown';
 
   mountLanes(entrants);
   renderPositions(0);
   setStageBeat('locked');
-  elements.title.textContent = 'The whistle blows. Nobody knows.';
-  elements.proofText.textContent = `Result locked: SHA‑256 ${state.race.commitment.slice(0, 18)}…`;
-  elements.proofStrip.classList.add('race-active');
-  renderEventCard('LOCKED', 'Proof committed', 'The result is set. The river can only tell the story.');
+  elements.proofText.textContent = `SEALED · SHA-256 ${state.race.commitment.slice(0, 16)}…`;
+  elements.proofTicket.classList.add('ticket-locked');
   elements.courseState.textContent = elements.course.value === 'random'
-    ? 'RANDOM ROUTE · TANGLEWATER FOR V1'
-    : 'TANGLEWATER · MARSH COURSE';
-  elements.packStatus.textContent = 'The pack launches from the reeds.';
+    ? 'RANDOM · VISUAL ROUTE ONLY'
+    : 'TANGLEWATER · VISUAL ROUTE';
   elements.clock.textContent = '00:00';
   elements.resultCard.classList.add('hidden');
-  elements.reset.classList.add('hidden');
+  elements.burst.classList.remove('bursting');
   elements.verificationStatus.textContent = '';
-  elements.live.textContent = 'Fair race launched. Result locked before the animation.';
-  document.querySelector('.app-shell').classList.add('race-active');
-  state.frame = window.requestAnimationFrame(tick);
+  elements.drawer.inert = true;
+  elements.app.classList.add('race-launched');
+  elements.live.textContent = 'Fair result sealed before the countdown.';
+  runCountdown();
 }
 
 async function completeRace() {
   state.phase = 'finished';
+  window.clearTimeout(state.placardTimer);
   const winnerNode = elements.lanes.querySelector(`[data-duck="${state.race.winner.id}"]`);
   winnerNode?.setAttribute('data-finished', 'true');
-  elements.title.textContent = 'Photo finish, proof intact.';
   setStageBeat('finish');
-  elements.packStatus.textContent = `${state.race.winner.name} crosses first.`;
-  elements.resultTitle.textContent = `${state.race.winner.name} wins the river.`;
-  elements.resultText.textContent = 'Their result was locked before the ducks started moving — now verify it yourself.';
-  elements.proofReveal.textContent = `seed ${state.race.seed}  ·  SHA-256 ${state.race.commitment}`;
+  elements.stage.dataset.launchState = 'finished';
+  showPlacard('RIBBON BURST', `${state.race.winner.name} takes the ribbon!`, 'The sealed ticket can now be unfolded.');
+  elements.packStatus.textContent = 'The river mat settles after a very close finish.';
+  elements.resultTitle.textContent = `${state.race.winner.name} wins the toybox ribbon!`;
+  elements.resultText.textContent = 'This name was committed before the key turned. Unfold the ticket to check the proof locally.';
+  elements.proofReveal.textContent = `seed ${state.race.seed} · SHA-256 ${state.race.commitment}`;
   elements.resultCard.classList.remove('hidden');
-  elements.reset.classList.remove('hidden');
+  elements.burst.classList.add('bursting');
   elements.start.disabled = false;
-  elements.proofText.textContent = 'Proof revealed. The race animation did not choose the winner.';
-  elements.live.textContent = `${state.race.winner.name} won. The seed and proof are available for verification.`;
+  elements.proofText.textContent = 'TICKET OPEN · result and proof revealed';
+  elements.proofTicket.classList.remove('ticket-locked');
+  elements.live.textContent = `${state.race.winner.name} won the toybox ribbon. The ticket is ready for verification.`;
 }
 
 function resetRace() {
   window.cancelAnimationFrame(state.frame);
+  window.clearTimeout(state.countdownTimer);
+  window.clearTimeout(state.placardTimer);
   state = {
-    phase: 'setup',
-    race: null,
-    story: null,
-    frame: 0,
-    startedAt: 0,
-    activeBeat: 'setup',
-    course: 'tanglewater',
+    phase: 'setup', race: null, story: null, frame: 0, countdownTimer: 0, placardTimer: 0, startedAt: 0, activeBeat: 'setup',
   };
-  elements.title.textContent = 'Waiting at the starting reeds';
-  elements.proofText.textContent = 'The commitment appears the moment you launch.';
-  elements.proofStrip.classList.remove('race-active');
-  renderEventCard('UP NEXT', 'Set your lineup', 'The river needs at least two ducks.');
+  elements.stage.dataset.launchState = 'resting';
   setStageBeat('setup');
+  elements.proofText.textContent = 'SEALED TICKET · waiting to wind';
+  elements.proofTicket.classList.remove('ticket-locked');
+  showPlacard('READY', 'Open the race crate', 'Set the ducks loose on the river mat.');
   elements.lanes.innerHTML = '';
+  mountIdleDucks(parseEntrants(elements.entrants.value));
   elements.clock.textContent = '00:00';
-  elements.courseState.textContent = 'TANGLEWATER · MARSH COURSE';
-  elements.packStatus.textContent = 'The pack is waiting.';
+  elements.courseState.textContent = elements.course.value === 'random'
+    ? 'RANDOM · VISUAL ROUTE ONLY'
+    : 'TANGLEWATER · VISUAL ROUTE';
+  elements.packStatus.textContent = 'The playset is ready.';
   elements.resultCard.classList.add('hidden');
-  elements.reset.classList.add('hidden');
-  document.querySelector('.app-shell').classList.remove('race-active');
+  elements.burst.classList.remove('bursting');
+  elements.drawer.inert = false;
+  elements.app.classList.remove('race-launched');
   elements.entrants.focus();
 }
 
 elements.form.addEventListener('submit', (event) => {
   event.preventDefault();
-  if (state.phase !== 'running') startRace();
+  if (state.phase === 'setup') startRace();
 });
-elements.entrants.addEventListener('input', updateEntrantCount);
+elements.entrants.addEventListener('input', updateRosterPreview);
+elements.course.addEventListener('change', () => {
+  if (state.phase === 'setup') {
+    elements.courseState.textContent = elements.course.value === 'random'
+      ? 'RANDOM · VISUAL ROUTE ONLY'
+      : 'TANGLEWATER · VISUAL ROUTE';
+  }
+});
 elements.reset.addEventListener('click', resetRace);
 elements.verify.addEventListener('click', async () => {
   const verified = await verifyRaceProof(state.race);
   elements.verificationStatus.textContent = verified
-    ? '✓ Verified — revealed seed and winner reproduce the commitment.'
-    : 'Proof could not be verified.';
+    ? 'Verified — the revealed seed and winner reproduce this ticket.'
+    : 'This ticket could not be verified.';
+  elements.live.textContent = elements.verificationStatus.textContent;
 });
 
-updateEntrantCount();
+updateRosterPreview();
