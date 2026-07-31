@@ -141,23 +141,37 @@ test('keeps the early pack tight, rotates leaders, and gives no pre-finale advan
   assert.ok(leaderIds.size >= 2, `expected multiple early leaders; got ${[...leaderIds].join(', ')}`);
 });
 
-test('gives a different duck the moment at each early story beat', async () => {
+test('assigns distinct ducks to the seeded visual beats', async () => {
   for (let seedIndex = 0; seedIndex < 12; seedIndex += 1) {
     const race = await createRace(entrants, {
-      seed: `event-leaders-${seedIndex}`,
+      seed: `event-targets-${seedIndex}`,
       randomUint32: () => 0,
     });
     const story = createRaceStory(race);
     const eventDuckIds = story.events.map((event) => event.duckId);
-    assert.equal(new Set(eventDuckIds).size, story.events.length);
 
-    for (const event of story.events) {
-      const positions = getRacePositions(race, story, event.at);
-      const leaderIds = positions
-        .filter((duck) => duck.progress === positions[0].progress)
-        .map((duck) => duck.id);
-      assert.ok(leaderIds.includes(event.duckId), `${event.duckId} should lead at ${event.title}`);
-    }
+    assert.equal(new Set(eventDuckIds).size, story.events.length);
+    assert.ok(eventDuckIds.every((duckId) => entrants.some((entrant) => entrant.id === duckId)));
+  }
+});
+
+test('uses each event target only for visual placement and never for race progress', async () => {
+  const race = await createRace(entrants, {
+    seed: 'visual-only-obstacles',
+    randomUint32: () => 0,
+  });
+  const story = createRaceStory(race);
+  const storyWithoutTargets = {
+    ...story,
+    events: story.events.map((event) => ({ ...event, duckId: 'not-an-entrant' })),
+  };
+
+  for (const checkpoint of [0.3, 0.5, 0.68]) {
+    assert.deepEqual(
+      getRacePositions(race, story, checkpoint),
+      getRacePositions(race, storyWithoutTargets, checkpoint),
+      `event target changed race progress at ${checkpoint}`,
+    );
   }
 });
 

@@ -2,15 +2,14 @@ const UINT32_RANGE = 0x1_0000_0000;
 const FINALE_START = 0.75;
 const MIN_ENTRANTS = 2;
 const MAX_ENTRANTS = 12;
-const EVENT_WINDOW = 0.09;
 const textEncoder = new TextEncoder();
 const EVENT_DECK = [
-  { title: 'Cross-current', description: 'A sideways current shuffles the pack.' },
-  { title: 'Reed slalom', description: 'A duck threads through the reeds.' },
-  { title: 'Splash zone', description: 'A surprise splash wakes one duck up.' },
-  { title: 'River ripple', description: 'The water compresses the pack.' },
-  { title: 'Cheering bank', description: 'The crowd gives one duck a boost.' },
-  { title: 'Driftwood gate', description: 'The field breaks into two clusters, then rejoins.' },
+  { title: 'Cross-current', description: 'Paper-water ribbons sweep across the toy river.' },
+  { title: 'Reed slalom', description: 'Foam reeds pop up beside a seeded lane.' },
+  { title: 'Splash zone', description: 'Cardboard droplets spray beside a seeded lane.' },
+  { title: 'River ripple', description: 'A crank wheel sends ripples through the river mat.' },
+  { title: 'Cheering bank', description: 'The crowd raises painted signs beside a seeded lane.' },
+  { title: 'Driftwood gate', description: 'Chunky toy logs swing into view beside a seeded lane.' },
 ];
 
 function requireCrypto() {
@@ -144,18 +143,10 @@ function smoothstep(value) {
   return value * value * (3 - 2 * value);
 }
 
-function eventInfluence(duckId, story, fraction) {
-  return story.events.reduce((total, event) => {
-    if (event.duckId !== duckId) return total;
-    const distance = Math.abs(fraction - event.at);
-    return distance > EVENT_WINDOW ? total : total + event.boost * (1 - distance / EVENT_WINDOW);
-  }, 0);
-}
-
 function earlyProgress(duckId, story, fraction) {
   const duck = story.ducks[duckId];
   const rollingWake = Math.sin(fraction * 19 + duck.phase) * 0.005;
-  const position = 0.035 + fraction * 0.74 + duck.laneBias + rollingWake + eventInfluence(duckId, story, fraction);
+  const position = 0.035 + fraction * 0.74 + duck.laneBias + rollingWake;
   return clamp(position, 0.01, 0.62);
 }
 
@@ -182,7 +173,6 @@ export function createRaceStory(race) {
       title,
       description,
       duckId: eventDuckOrder[index % eventDuckOrder.length],
-      boost: 0.03 + random() * 0.004,
     };
   });
   const finishOrder = [

@@ -137,9 +137,12 @@ function setStageBeat(key, event = null) {
   elements.stage.dataset.stageEvent = key;
   if (event) {
     const lane = state.race.entrants.findIndex((duck) => duck.id === event.duckId);
+    const laneCenter = 37 + ((Math.max(lane, 0) + 0.5) / state.race.entrants.length) * 54;
     elements.stage.style.setProperty('--event-lane', String(Math.max(lane, 0)));
+    elements.stage.style.setProperty('--event-lane-top', `${laneCenter}%`);
   } else {
     elements.stage.style.removeProperty('--event-lane');
+    elements.stage.style.removeProperty('--event-lane-top');
   }
 }
 
