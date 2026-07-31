@@ -40,6 +40,8 @@ const elements = {
   courseState: document.querySelector('#course-state'),
   packStatus: document.querySelector('#pack-status'),
   burst: document.querySelector('#ribbon-burst'),
+  winnerAnnouncement: document.querySelector('#winner-announcement'),
+  winnerAnnouncementName: document.querySelector('#winner-announcement-name'),
   resultCard: document.querySelector('#result-card'),
   resultTitle: document.querySelector('#result-title'),
   resultText: document.querySelector('#result-text'),
@@ -268,6 +270,7 @@ async function startRace() {
     : 'TANGLEWATER · VISUAL ROUTE';
   elements.clock.textContent = '00:00';
   elements.resultCard.classList.add('hidden');
+  elements.winnerAnnouncement.classList.add('hidden');
   elements.burst.classList.remove('bursting');
   elements.verificationStatus.textContent = '';
   elements.drawer.inert = true;
@@ -287,6 +290,8 @@ async function completeRace() {
   elements.packStatus.textContent = 'The river mat settles after a very close finish.';
   elements.resultTitle.textContent = `${state.race.winner.name} wins the toybox ribbon!`;
   elements.resultText.textContent = 'This name was committed before the key turned. Unfold the ticket to check the proof locally.';
+  elements.winnerAnnouncementName.textContent = state.race.winner.name;
+  elements.winnerAnnouncement.classList.remove('hidden');
   elements.proofReveal.textContent = `seed ${state.race.seed} · SHA-256 ${state.race.commitment}`;
   elements.resultCard.classList.remove('hidden');
   elements.burst.classList.add('bursting');
@@ -316,6 +321,8 @@ function resetRace() {
     : 'TANGLEWATER · VISUAL ROUTE';
   elements.packStatus.textContent = 'The playset is ready.';
   elements.resultCard.classList.add('hidden');
+  elements.winnerAnnouncement.classList.add('hidden');
+  elements.winnerAnnouncementName.textContent = '—';
   elements.burst.classList.remove('bursting');
   elements.drawer.inert = false;
   elements.app.classList.remove('race-launched');
