@@ -8,6 +8,7 @@ import {
   uniformIndex,
   verifyRaceProof,
 } from '../src/race-engine.js';
+import { RACE_DURATION_PRESETS, getRaceDurationMs } from '../src/race-duration.js';
 
 const entrants = [
   { id: 'ada', name: 'Ada' },
@@ -49,6 +50,18 @@ test('uses rejection sampling at the unsigned 32-bit boundary', () => {
   const sampledValues = [0, 0xffff_ffff];
   assert.equal(uniformIndex(3, () => sampledValues.shift()), 0);
   assert.deepEqual(sampledValues, []);
+});
+
+test('maps selectable race durations and falls back to the steady pace', () => {
+  assert.deepEqual(RACE_DURATION_PRESETS, {
+    quick: 12_000,
+    steady: 20_000,
+    long: 30_000,
+  });
+  assert.equal(getRaceDurationMs('quick'), 12_000);
+  assert.equal(getRaceDurationMs('steady'), 20_000);
+  assert.equal(getRaceDurationMs('long'), 30_000);
+  assert.equal(getRaceDurationMs('not-a-preset'), 20_000);
 });
 
 test('requires the locked winner to be an entrant before creating a visual story', () => {

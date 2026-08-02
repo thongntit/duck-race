@@ -102,6 +102,15 @@ Duy</textarea>
             <div class="roster-chips" id="roster-chips" aria-label="Duck roster preview"></div>
           </div>
           <div class="crate-row">
+            <label for="race-duration">Race duration <span>animation only</span></label>
+            <select id="race-duration" aria-describedby="duration-help">
+              <option value="quick">Quick · 12 seconds</option>
+              <option value="steady" selected>Steady · 20 seconds</option>
+              <option value="long">Long · 30 seconds</option>
+            </select>
+          </div>
+          <p class="field-help course-help" id="duration-help">Steady is slower by default. Timing never changes the locked result.</p>
+          <div class="crate-row">
             <label for="course">Course <span>looks only</span></label>
             <select id="course" aria-describedby="course-help">
               <option value="tanglewater">Tanglewater river mat</option>

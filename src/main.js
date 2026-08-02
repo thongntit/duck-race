@@ -5,9 +5,9 @@ import {
   getRacePositions,
   verifyRaceProof,
 } from './race-engine.js';
+import { getRaceDurationMs } from './race-duration.js';
 
 const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const RACE_DURATION_MS = REDUCED_MOTION ? 1500 : 13_500;
 const COUNTDOWN_STEP_MS = REDUCED_MOTION ? 210 : 650;
 const DUCK_COLORS = ['#ffcc35', '#ff7961', '#70c5dd', '#f3a3bf', '#9acc71', '#bca6e3', '#f3a45e', '#8fd1b5', '#ec8e76', '#bdcf81', '#f1bd5b', '#9fbae4'];
 const IDLE_DUCKS = [
@@ -24,6 +24,7 @@ const elements = {
   entrants: document.querySelector('#entrants'),
   entrantCount: document.querySelector('#entrant-count'),
   rosterChips: document.querySelector('#roster-chips'),
+  duration: document.querySelector('#race-duration'),
   course: document.querySelector('#course'),
   formMessage: document.querySelector('#form-message'),
   start: document.querySelector('#start-race'),
@@ -59,6 +60,7 @@ let state = {
   countdownTimer: 0,
   placardTimer: 0,
   startedAt: 0,
+  raceDurationMs: getRaceDurationMs('steady'),
   activeBeat: 'setup',
 };
 
@@ -97,7 +99,10 @@ function validateEntrants(entrants) {
 }
 
 function formatTime(fraction) {
-  const seconds = Math.min(Math.floor(fraction * RACE_DURATION_MS / 1000), Math.floor(RACE_DURATION_MS / 1000));
+  const seconds = Math.min(
+    Math.floor(fraction * state.raceDurationMs / 1000),
+    Math.floor(state.raceDurationMs / 1000),
+  );
   return `00:${String(seconds).padStart(2, '0')}`;
 }
 
@@ -203,7 +208,7 @@ function updatePackStatus(fraction) {
 }
 
 function tick(timestamp) {
-  const fraction = Math.min((timestamp - state.startedAt) / RACE_DURATION_MS, 1);
+  const fraction = Math.min((timestamp - state.startedAt) / state.raceDurationMs, 1);
   renderPositions(fraction);
   updateRaceBeat(fraction);
   elements.clock.textContent = formatTime(fraction);
@@ -255,6 +260,7 @@ async function startRace() {
 
   showFormMessage();
   elements.start.disabled = true;
+  state.raceDurationMs = getRaceDurationMs(elements.duration.value);
   state.race = await createRace(entrants);
   state.story = createRaceStory(state.race);
   state.phase = 'countdown';
@@ -306,7 +312,8 @@ function resetRace() {
   window.clearTimeout(state.countdownTimer);
   window.clearTimeout(state.placardTimer);
   state = {
-    phase: 'setup', race: null, story: null, frame: 0, countdownTimer: 0, placardTimer: 0, startedAt: 0, activeBeat: 'setup',
+    phase: 'setup', race: null, story: null, frame: 0, countdownTimer: 0, placardTimer: 0, startedAt: 0,
+    raceDurationMs: getRaceDurationMs(elements.duration.value), activeBeat: 'setup',
   };
   elements.stage.dataset.launchState = 'resting';
   setStageBeat('setup');
